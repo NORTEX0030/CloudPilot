@@ -19,3 +19,9 @@ target/
 # OS
 .DS_Store
 Thumbs.db
+node_modules/
+.env
+.DS_Store
+target/
+__pycache__/
+*.pyc

@@ -1,0 +1,69 @@
+
+# declaring all the Micro-Services 
+services:
+# For Frontend service
+  frontend:
+    image: frontend-service
+    build: 
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - catalogue
+    networks:
+      - app-net
+
+  # For catalogue service
+  catalogue:
+    image: catalogue-service
+    build: 
+      context: ./catalogue
+    ports:
+      - "5000:5000"
+    depends_on:
+      - catalogue-db 
+    networks:
+      - app-net
+
+  catalogue-db:     # PostgreSQL DB
+    image: postgres:16.2-alpine
+    environment:
+      POSTGRES_USER: devops
+      POSTGRES_PASSWORD: devops
+      POSTGRES_DB: catalogue
+    networks:
+      - app-net
+
+
+  # For voting service
+  voting:
+    image: voting-service
+    build: 
+      context: ./voting
+    ports:
+      - "8080:8080"
+    depends_on: 
+      - catalogue
+    networks:
+      - app-net
+
+
+  # For recommendation service
+  recommendation:
+    image: recommendation-service
+    build: 
+      context: ./recommendation
+    ports:
+      - "8081:8080"
+    networks:
+      - app-net
+
+
+# Creating a Network 
+networks:
+  app-net:
+    driver: bridge
+
+
+
+
