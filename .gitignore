@@ -1,0 +1,21 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+
+# Java
+target/
+
+# VSCode settings
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
