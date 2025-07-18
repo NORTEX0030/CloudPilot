@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudpilot-voting
+  labels: 
+     app.kubernetes.io/name: cloudpilot-voting
+     app.kubernetes.io/component: voting
+     app.kubernetes.io/part-of: cloudpilot
+     app.kubernetes.io/instance: cloudpilot
+     app.kubernetes.io/version: "1.0.0"
+spec:
+  replicas: 1 
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudpilot-voting
+      app.kubernetes.io/component: voting
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cloudpilot-voting
+        app.kubernetes.io/component: voting
+        app.kubernetes.io/part-of: cloudpilot
+        app.kubernetes.io/instance: cloudpilot
+    spec:
+      serviceAccountName: cloudpilot-voting
+      containers:
+        - name: voting
+          image: voting-service
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: voting-svc
+          env:
+            - name: PORT
+              value: "8080"
+            - name: CATALOGUE_SERVICE_HOST
+              value: "catalogue"              # K8s service name
+            - name: CATALOGUE_SERVICE_PORT
+              value: "5000"
+          resources:
+            limits:
+              memory: 300Mi
+          securityContext:
+            runAsNonRoot: true
+
+

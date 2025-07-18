@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudpilot-recommendation
+  labels: 
+     app.kubernetes.io/name: cloudpilot-recommendation
+     app.kubernetes.io/component: recommendation
+     app.kubernetes.io/part-of: cloudpilot
+     app.kubernetes.io/instance: cloudpilot
+     app.kubernetes.io/version: "1.0.0"
+spec:
+  replicas: 1 
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudpilot-recommendation
+      app.kubernetes.io/component: recommendation
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cloudpilot-recommendation
+        app.kubernetes.io/component: recommendation
+        app.kubernetes.io/part-of: cloudpilot
+        app.kubernetes.io/instance: cloudpilot
+    spec:
+      serviceAccountName: cloudpilot-recommendation
+      containers:
+        - name: recommendation
+          image: recommendation-service
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: recom-service
+          resources:
+            limits:
+              memory: 300Mi
+          securityContext:
+            runAsNonRoot: true
+
+
