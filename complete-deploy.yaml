@@ -1,0 +1,300 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cloudpilot-serviceaccount
+  labels:
+
+    opentelemetry.io/name: cloudpilot
+    app.kubernetes.io/instance: cloudpilot
+    app.kubernetes.io/name: cloudpilot
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/part-of: cloudpilot
+---
+# frontend.yaml
+ 
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudpilot-serviceaccount
+  labels:
+    app.kubernetes.io/name: cloudpilot-frontend
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: cloudpilot
+    app.kubernetes.io/instance: cloudpilot
+    app.kubernetes.io/version: "1.0.0"
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: cloudpilot-frontend
+    app.kubernetes.io/component: frontend
+  ports:
+    - port: 3000
+      name: tcp-service
+      targetPort: 3000
+---
+# catalogue.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudpilot-catalogue
+  labels:
+    app.kubernetes.io/name: cloudpilot-catalogue
+    app.kubernetes.io/component: catalogue
+    app.kubernetes.io/part-of: cloudpilot
+    app.kubernetes.io/instance: cloudpilot
+    app.kubernetes.io/version: "1.0.0"
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: cloudpilot-catalogue
+    app.kubernetes.io/component: catalogue
+  ports:
+    - port: 5000
+      name: tcp-service
+      targetPort: 5000
+---
+# recommendation.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudpilot-recommendation
+  labels:
+    app.kubernetes.io/name: cloudpilot-recommendation
+    app.kubernetes.io/component: catalogue
+    app.kubernetes.io/part-of: cloudpilot
+    app.kubernetes.io/instance: cloudpilot
+    app.kubernetes.io/version: "1.0.0"
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: cloudpilot-recommendation
+    app.kubernetes.io/component: recommendation
+  ports:
+    - port: 8080
+      name: recom-service
+      targetPort: 8080
+---
+# voting.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudpilot-voting
+  labels:
+    app.kubernetes.io/name: ccloudpilot-voting
+    app.kubernetes.io/component: voting
+    app.kubernetes.io/part-of: cloudpilot
+    app.kubernetes.io/instance: cloudpilot
+    app.kubernetes.io/version: "1.0.0"
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: cloudpilot-voting
+    app.kubernetes.io/component: voting
+  ports:
+    - port: 8080
+      name: voting-svc
+      targetPort: 8080
+
+---
+
+
+# frontend deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudpilot-frontend
+  labels:
+     app.kubernetes.io/name: cloudpilot-frontend
+     app.kubernetes.io/component: frontend
+     app.kubernetes.io/part-of: cloudpilot
+     app.kubernetes.io/instance: cloudpilot
+     app.kubernetes.io/version: "1.0.0"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudpilot-frontend
+      app.kubernetes.io/component: frontend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cloudpilot-frontend
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/part-of: cloudpilot
+        app.kubernetes.io/instance: cloudpilot
+    spec:
+      serviceAccountName: cloudpilot-serviceaccount
+      containers:
+        - name: frontend
+          image: frontend-service
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: tcp-service
+          env:
+            - name: PORT
+              value: "3000"
+            - name: CATALOGUE_SERVICE_HOST
+              value: "catalogue"
+            - name: CATALOGUE_SERVICE_PORT
+              value: "5000"
+          resources:
+            limits:
+              memory: 250Mi
+          securityContext:
+            runAsNonRoot: true
+
+---
+
+# catalogue deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudpilot-catalogue
+  labels:
+     app.kubernetes.io/name: cloudpilot-catalogue
+     app.kubernetes.io/component: catalogue
+     app.kubernetes.io/part-of: cloudpilot
+     app.kubernetes.io/instance: cloudpilot
+     app.kubernetes.io/version: "1.0.0"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudpilot-catalogue
+      app.kubernetes.io/component: catalogue
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cloudpilot-catalogue
+        app.kubernetes.io/component: catalogue
+        app.kubernetes.io/part-of: cloudpilot
+        app.kubernetes.io/instance: cloudpilot
+    spec:
+      serviceAccountName: cloudpilot-serviceaccount
+      containers:
+        - name: catalogue
+          image: catalogue-service
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+              name: tcp-service
+          env:
+            - name: PORT
+              value: "5000"
+            - name: POSTGRES_USER
+              value: "devops"
+            - name: POSTGRES_PASSWORD
+              value: "devops"
+            - name: POSTGRES_DB
+              value: "catalogue"
+            - name: POSTGRES_HOST
+              value: "catalogue-db"
+          resources:
+            limits:
+              memory: 300Mi
+          securityContext:
+            runAsNonRoot: true
+
+---
+
+# recommendation deployment.yaml
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudpilot-recommendation
+  labels:
+     app.kubernetes.io/name: cloudpilot-recommendation
+     app.kubernetes.io/component: recommendation
+     app.kubernetes.io/part-of: cloudpilot
+     app.kubernetes.io/instance: cloudpilot
+     app.kubernetes.io/version: "1.0.0"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudpilot-recommendation
+      app.kubernetes.io/component: recommendation
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cloudpilot-recommendation
+        app.kubernetes.io/component: recommendation
+        app.kubernetes.io/part-of: cloudpilot
+        app.kubernetes.io/instance: cloudpilot
+    spec:
+      serviceAccountName: cloudpilot-serviceaccount
+      containers:
+        - name: recommendation
+          image: recommendation-service
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: recom-service
+          resources:
+            limits:
+              memory: 300Mi
+          securityContext:
+            runAsNonRoot: true
+
+---
+
+# voting deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudpilot-voting
+  labels:
+     app.kubernetes.io/name: cloudpilot-voting
+     app.kubernetes.io/component: voting
+     app.kubernetes.io/part-of: cloudpilot
+     app.kubernetes.io/instance: cloudpilot
+     app.kubernetes.io/version: "1.0.0"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudpilot-voting
+      app.kubernetes.io/component: voting
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cloudpilot-voting
+        app.kubernetes.io/component: voting
+        app.kubernetes.io/part-of: cloudpilot
+        app.kubernetes.io/instance: cloudpilot
+    spec:
+      serviceAccountName: cloudpilot-serviceaccount
+      containers:
+        - name: voting
+          image: voting-service
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: voting-svc
+          env:
+            - name: PORT
+              value: "8080"
+            - name: CATALOGUE_SERVICE_HOST
+              value: "catalogue"              # K8s service name
+            - name: CATALOGUE_SERVICE_PORT
+              value: "5000"
+          resources:
+            limits:
+              memory: 300Mi
+          securityContext:
+            runAsNonRoot: true
+
+
