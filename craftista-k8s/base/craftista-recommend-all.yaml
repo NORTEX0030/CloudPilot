@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: craftista-recommend-service
+  labels:
+    app: craftista-recommend
+    service: craftista-recommend
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    app: craftista-recommend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: craftista-recommend
+  labels:
+    app: craftista-recommend
+    service: craftista-recommend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: craftista-recommend
+  template:
+    metadata:
+      labels:
+        app: craftista-recommend
+        service: craftista-recommend
+    spec:
+      containers:
+        - name: craftista-recommend
+          image: hema995/craftista-recommendation:6
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi  
+          imagePullPolicy: Always   
+---

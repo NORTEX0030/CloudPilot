@@ -1,0 +1,138 @@
+apiVersion: v1
+kind: ConfigMap
+metadata: 
+  name: craftista-voting-config
+  labels:
+    app: craftista-voting
+    service: craftista-voting
+    config: craftista-voting
+data:
+  POSTGRES_HOST: "craftista-postgres-voting-service"
+  POSTGRES_PORT: "5432"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: craftista-postgres-voting-service
+  labels:
+    app: craftista-postgres-voting-service
+    service: craftista-postgres-voting-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    app: craftista-postgres-voting
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: craftista-postgres-voting
+  labels:
+    app: craftista-postgres-voting
+    service: craftista-postgres-voting
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: craftista-postgres-voting
+  template:
+    metadata:
+      labels:
+        app: craftista-postgres-voting
+    spec:
+      containers:
+        - name: craftista-postgres-voting
+          image: postgres:latest
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - configMapRef:
+                name: craftista-voting-config
+            - secretRef:
+                name: postgres-secret
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /mnt/data/
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc 
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+  labels:
+    app: craftista-postgres-voting
+    service: craftista-postgres-voting
+type: Opaque
+data:
+  POSTGRES_USER: dm90aW5nLXVzZXItZGI=
+  POSTGRES_PASSWORD: dm90aW5ncGFzc3dvcmQtZGI=
+  POSTGRES_DB: dm90aW5nLXBvc3RncmVzLWRi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: craftista-voting-service
+  labels:
+    app: craftista-voting
+    service: craftista-voting
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8060
+      targetPort: 8060
+      protocol: TCP
+  selector:
+    app: craftista-voting
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: craftista-voting
+  labels:
+    app: craftista-voting
+    service: craftista-voting
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: craftista-voting
+  template:
+    metadata:
+      labels:
+        app: craftista-voting
+        service: craftista-voting
+    spec:
+      containers:
+        - name: craftista-voting
+          image: hema995/craftista-voting:6
+          ports:
+            - containerPort: 8060
+          resources:
+            requests:
+              cpu: 256m
+              memory: 256Mi
+            limits:
+              cpu: 256m
+              memory: 256Mi  
+          imagePullPolicy: Always
+---
+
+          

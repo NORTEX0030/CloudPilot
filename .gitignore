@@ -1,5 +1,7 @@
 # Node modules
 node_modules/
+package-lock.json
+
 
 # Build output
 dist/
@@ -25,3 +27,12 @@ node_modules/
 target/
 __pycache__/
 *.pyc
+
+#env 
+.terraform/
+terraform.tfvars
+terraform.tfstate
+terraform.tfstate.backup
+
+#keys
+keys/

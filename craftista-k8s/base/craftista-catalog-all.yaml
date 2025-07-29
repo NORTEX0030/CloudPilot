@@ -1,0 +1,129 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-craftista-catalog-service
+  labels:
+    app: mongodb-craftista-catalog
+    service: mongo-craftista-catalog
+spec:
+  ports:
+    - port: 27017
+      targetPort: 27017
+      protocol: TCP
+  type: ClusterIP
+  selector:
+    app: mongodb-craftista-catalog
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-craftista-catalog
+  labels:
+    app: mongodb-craftista-catalog
+    service: mongo-craftista-catalog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb-craftista-catalog
+  template:
+    metadata:
+      labels:
+        app: mongodb-craftista-catalog
+        service: mongo-craftista-catalog
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:latest
+          ports:
+            - containerPort: 27017
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - mountPath: /data/db
+              name: mongodb-storage
+      volumes:
+        - name: mongodb-storage
+          persistentVolumeClaim:
+            claimName: mongodb-craftista-catalog-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-craftista-catalog-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: craftista-catalog-config
+  labels:
+    app: craftista-catalog
+    service: craftista-catalog
+    config: craftista-catalog
+data:
+  MONGODB_HOST: mongo-craftista-catalog-service
+  MONGODB_PORT: "27017"
+  MONGODB_DATABASE: craftista-catalog
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: craftista-catalog-service
+  labels:
+    app: craftista-catalog
+    service: craftista-catalog
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP
+  selector:
+    app: craftista-catalog
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: craftista-catalog
+  labels:
+    app: craftista-catalog
+    service: craftista-catalog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: craftista-catalog
+  template:
+    metadata:
+      labels:
+        app: craftista-catalog
+        service: craftista-catalog
+    spec:
+      containers:
+        - name: craftista-catalog
+          image: hema995/craftista-catalogue:6
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - configMapRef:
+                name: craftista-catalog-config
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m" 
+---

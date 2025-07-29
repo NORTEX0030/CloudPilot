@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: staging
+  labels:
+    name: staging
+    app: staging
+    environment: quality-assurance
+    owner: qa-team
+    team: qa-team
+  annotations:
+    description: "Namespace for the qa of craftista"
+    purpose: "for cluster under qa"
+    version: "1.0"

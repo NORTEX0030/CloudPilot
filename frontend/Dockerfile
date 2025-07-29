@@ -1,24 +1,31 @@
-FROM node:latest as build
+FROM node:16-alpine AS builder
 
 WORKDIR /app
-
 COPY package*.json ./
-
-RUN npm install
-
+RUN npm ci --only=production
 COPY . .
 
-# Stage 2: Run
-FROM node:alpine
-
-# Set a non-root user for better security
-RUN adduser -D appuser
-USER appuser
+FROM node:16-alpine
 
 WORKDIR /app
 
-COPY --from=build /app .
+# Create a non-root user and group
+RUN addgroup -S appgroup && \
+    adduser -S appuser -G appgroup
 
-EXPOSE 3000
+# Copy files from the builder stage and set ownership
+COPY --from=builder /app ./
+RUN chown -R appuser:appgroup /app
 
+# Switch to the non-root user
+USER appuser
+
+# Set environment variables and expose the port
+ENV PORT=3000
+EXPOSE $PORT
+
+# Add a health check
+HEALTHCHECK --interval=30s --timeout=10s CMD wget -q -O- http://localhost:$PORT/health || exit 1
+
+# Start the application
 CMD ["node", "app.js"]

@@ -1,0 +1,99 @@
+# Default values for craftista
+global:
+  imageRegistry: docker.io
+  imageTag: 6
+  imagePullPolicy: Always
+
+# Frontend Service
+frontend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: hema995/craftista-frontend
+    tag: "1"
+  service:
+    type: LoadBalancer
+    port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 100Mi
+    limits:
+      cpu: 100m
+      memory: 100Mi
+
+# Catalogue Service
+catalogue:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: hema995/craftista-catalogue
+    tag: "1"
+  service:
+    type: LoadBalancer
+    port: 5000
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  mongodb:
+    enabled: true
+    persistence:
+      size: 1Gi
+      storageClass: standard
+
+# Recommendation Service
+recommendation:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: hema995/craftista-recommendation
+    tag: "1"
+  service:
+    type: LoadBalancer
+    port: 8000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 100Mi
+    limits:
+      cpu: 100m
+      memory: 100Mi
+
+# Voting Service
+voting:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: hema995/craftista-voting
+    tag: "1"
+  service:
+    type: LoadBalancer
+    port: 8060
+  resources:
+    requests:
+      cpu: 500m
+      memory: 500Mi
+    limits:
+      cpu: 500m
+      memory: 500Mi
+  postgresql:
+    enabled: true
+    persistence:
+      size: 1Gi
+      storageClass: standard
+    auth:
+      username: voting-user-db
+      password: votingpassword-db
+      database: voting-postgres-db
+
+# RBAC
+rbac:
+  create: true
+  serviceAccountName: craftista-sa
+
+# Environment-specific overrides
+environment: dev

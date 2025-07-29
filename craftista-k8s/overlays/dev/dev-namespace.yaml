@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dev
+  labels:
+    name: dev
+    app: dev
+    environment: development
+    owner: development-team
+    team: development-team
+  annotations:
+    description: "Namespace for the development of craftista"
+    purpose: "for cluster under development"
+    version: "1.0"

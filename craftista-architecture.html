@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Craftista Architecture - Animated</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            gap: 10px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab.active {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .diagram {
+            display: none;
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .diagram.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* High-Level Architecture */
+        .pipeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 40px 0;
+            position: relative;
+        }
+
+        .stage {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            min-width: 150px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .stage:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .stage.developer { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .stage.github { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .stage.jenkins { background: linear-gradient(135deg, #a8edea, #fed6e3); color: #333; }
+        .stage.dockerhub { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .stage.argocd { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .stage.gke { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+
+        .stage h3 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .stage p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .flow-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #667eea, transparent);
+            z-index: -1;
+        }
+
+        .flow-dot {
+            width: 12px;
+            height: 12px;
+            background: #667eea;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: flowAnimation 3s infinite linear;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+
+        @keyframes flowAnimation {
+            0% { left: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { left: 100%; opacity: 0; }
+        }
+
+        /* Microservices Architecture */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .service {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border-left: 5px solid;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, currentColor, transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .service:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .service.frontend { border-left-color: #4facfe; color: #4facfe; }
+        .service.catalogue { border-left-color: #fee140; color: #fee140; }
+        .service.recommendation { border-left-color: #f093fb; color: #f093fb; }
+        .service.voting { border-left-color: #a8edea; color: #a8edea; }
+
+        .service-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .service h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .service .tech {
+            background: rgba(0,0,0,0.1);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin: 5px;
+            display: inline-block;
+        }
+
+        /* Kubernetes Architecture */
+        .k8s-cluster {
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .k8s-cluster::before {
+            content: 'GKE Cluster';
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            font-weight: bold;
+            color: #666;
+            font-size: 1.2rem;
+        }
+
+        .namespaces {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .namespace {
+            background: rgba(255,255,255,0.8);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 2px solid;
+            position: relative;
+        }
+
+        .namespace.dev { border-color: #4facfe; }
+        .namespace.staging { border-color: #fee140; }
+        .namespace.argocd { border-color: #f093fb; grid-column: 1 / -1; }
+
+        .namespace h3 {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid currentColor;
+        }
+
+        .pods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .pod {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .pod:nth-child(even) {
+            animation-delay: -1.5s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .pod:hover {
+            transform: scale(1.05) translateY(-5px);
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4CAF50;
+            display: inline-block;
+            margin-right: 5px;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .control-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .pipeline {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .namespaces {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Craftista Architecture</h1>
+            <p>Modern Microservices Platform with GitOps</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showDiagram('pipeline')">CI/CD Pipeline</button>
+            <button class="tab" onclick="showDiagram('microservices')">Microservices</button>
+            <button class="tab" onclick="showDiagram('kubernetes')">Kubernetes</button>
+        </div>
+
+        <!-- CI/CD Pipeline -->
+        <div id="pipeline" class="diagram active">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #333;">🔄 Continuous Integration & Deployment</h2>
+            <div class="pipeline">
+                <div class="flow-line">
+                    <div class="flow-dot"></div>
+                </div>
+                
+                <div class="stage developer">
+                    <div class="service-icon">👨‍💻</div>
+                    <h3>Developer</h3>
+                    <p>Code Changes</p>
+                </div>
+                
+                <div class="stage github">
+                    <div class="service-icon">📚</div>
+                    <h3>GitHub</h3>
+                    <p>Source Control</p>
+                </div>
+                
+                <div class="stage jenkins">
+                    <div class="service-icon">⚙️</div>
+                    <h3>Jenkins</h3>
+                    <p>CI/CD Pipeline</p>
+                </div>
+                
+                <div class="stage dockerhub">
+                    <div class="service-icon">🐳</div>
+                    <h3>DockerHub</h3>
+                    <p>Container Registry</p>
+                </div>
+                
+                <div class="stage argocd">
+                    <div class="service-icon">🔄</div>
+                    <h3>ArgoCD</h3>
+                    <p>GitOps</p>
+                </div>
+                
+                <div class="stage gke">
+                    <div class="service-icon">☁️</div>
+                    <h3>GKE</h3>
+                    <p>Kubernetes</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Microservices -->
+        <div id="microservices" class="diagram">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #333;">🏗️ Microservices Architecture</h2>
+            <div class="services-grid">
+                <div class="service frontend">
+                    <div class="service-icon">🌐</div>
+                    <h3>Frontend</h3>
+                    <p>User Interface</p>
+                    <div class="tech">Node.js</div>
+                    <div class="tech">Port 3000</div>
+                    <div class="status-indicator"></div>
+                    <span>Running</span>
+                </div>
+                
+                <div class="service catalogue">
+                    <div class="service-icon">📦</div>
+                    <h3>Catalogue</h3>
+                    <p>Product Management</p>
+                    <div class="tech">Python Flask</div>
+                    <div class="tech">Port 5000</div>
+                    <div class="tech">MongoDB</div>
+                    <div class="status-indicator"></div>
+                    <span>Running</span>
+                </div>
+                
+                <div class="service recommendation">
+                    <div class="service-icon">🎯</div>
+                    <h3>Recommendation</h3>
+                    <p>Smart Suggestions</p>
+                    <div class="tech">Go</div>
+                    <div class="tech">Port 8000</div>
+                    <div class="status-indicator"></div>
+                    <span>Running</span>
+                </div>
+                
+                <div class="service voting">
+                    <div class="service-icon">🗳️</div>
+                    <h3>Voting</h3>
+                    <p>User Preferences</p>
+                    <div class="tech">Java Spring</div>
+                    <div class="tech">Port 8060</div>
+                    <div class="tech">PostgreSQL</div>
+                    <div class="status-indicator"></div>
+                    <span>Running</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kubernetes -->
+        <div id="kubernetes" class="diagram">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #333;">☸️ Kubernetes Deployment</h2>
+            <div class="k8s-cluster">
+                <div class="namespaces">
+                    <div class="namespace argocd">
+                        <h3 style="color: #f093fb;">🔄 ArgoCD Namespace</h3>
+                        <div class="pods">
+                            <div class="pod">
+                                <div class="status-indicator"></div>
+                                <strong>ArgoCD Server</strong>
+                                <br><small>LoadBalancer</small>
+                            </div>
+                            <div class="pod">
+                                <div class="status-indicator"></div>
+                                <strong>App Controller</strong>
+                                <br><small>GitOps Engine</small>
+                            </div>
+                            <div class="pod">
+                                <div class="status-indicator"></div>
+                                <strong>Repo Server</strong>
+                                <br><small>Git Sync</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="namespace dev">
+                        <h3 style="color: #4facfe;">🛠️ Development</h3>
+                        <div class="pods">
+                            <div class="pod">
+                                <div class="status-indicator"></div>
+                                <strong>Frontend</strong>
+                                <br><small>:3000</small>
+                            </div>
+                            <div class="pod">
+                                <div class="status-indicator"></div>
+                                <strong>Catalogue</strong>
+                                <br><small>:5000</small>
+                            </div>
+                            <div class="pod">
+                                <div class="status-indicator"></div>
+                                <strong>Recommendation</strong>
+                                <br><small>:8000</small>
+                            </div>
+                            <div class="pod">
+                                <div class="status-indicator"></div>
+                                <strong>Voting</strong>
+                                <br><small>:8060</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="namespace staging">
+                        <h3 style="color: #fee140;">🎭 Staging</h3>
+                        <div class="pods">
+                            <div class="pod">
+                                <div class="status-indicator"></div>
+                                <strong>Frontend</strong>
+                                <br><small>:3000</small>
+                            </div>
+                            <div class="pod">
+                                <div class="status-indicator"></div>
+                                <strong>Catalogue</strong>
+                                <br><small>:5000</small>
+                            </div>
+                            <div class="pod">
+                                <div class="status-indicator"></div>
+                                <strong>Recommendation</strong>
+                                <br><small>:8000</small>
+                            </div>
+                            <div class="pod">
+                                <div class="status-indicator"></div>
+                                <strong>Voting</strong>
+                                <br><small>:8060</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn" onclick="toggleAnimation()" title="Toggle Animation">⏸️</button>
+        <button class="control-btn" onclick="resetView()" title="Reset View">🔄</button>
+    </div>
+
+    <script>
+        let animationsPaused = false;
+
+        function showDiagram(diagramId) {
+            // Hide all diagrams
+            document.querySelectorAll('.diagram').forEach(d => d.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            // Show selected diagram
+            document.getElementById(diagramId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function toggleAnimation() {
+            animationsPaused = !animationsPaused;
+            const btn = event.target;
+            
+            if (animationsPaused) {
+                document.body.style.animationPlayState = 'paused';
+                document.querySelectorAll('*').forEach(el => {
+                    el.style.animationPlayState = 'paused';
+                });
+                btn.textContent = '▶️';
+            } else {
+                document.body.style.animationPlayState = 'running';
+                document.querySelectorAll('*').forEach(el => {
+                    el.style.animationPlayState = 'running';
+                });
+                btn.textContent = '⏸️';
+            }
+        }
+
+        function resetView() {
+            location.reload();
+        }
+
+        // Add interactive hover effects
+        document.querySelectorAll('.stage, .service, .pod').forEach(element => {
+            element.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.05) translateY(-5px)';
+            });
+            
+            element.addEventListener('mouseleave', function() {
+                this.style.transform = '';
+            });
+        });
+
+        // Add click effects
+        document.querySelectorAll('.service').forEach(service => {
+            service.addEventListener('click', function() {
+                this.style.animation = 'none';
+                setTimeout(() => {
+                    this.style.animation = '';
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>

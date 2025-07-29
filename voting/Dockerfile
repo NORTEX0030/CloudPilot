@@ -1,18 +1,31 @@
-FROM maven:3-eclipse-temurin-19-alpine as build
-
+FROM maven:3.8-eclipse-temurin-17 AS builder
 WORKDIR /app
 
-COPY . .
+# Install necessary packages
+RUN apt-get update && apt-get install -y ca-certificates && update-ca-certificates
 
-RUN mvn package
+COPY pom.xml .
+RUN mvn dependency:go-offline
+COPY src ./src
+RUN mvn package -DskipTests
 
-# Stage 2: Create a smaller image for production
-FROM openjdk:19-jdk-alpine3.16
-
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-COPY --from=build /app/target/voting-0.0.1-SNAPSHOT.jar app.jar
+# Add a non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-EXPOSE 8080
+# Copy the application JAR file from the builder stage
+COPY --from=builder /app/target/*.jar app.jar
 
+# Set ownership of the application files
+RUN chown -R appuser:appgroup /app
+
+# Switch to the non-root user
+USER appuser
+
+# Expose the application port
+EXPOSE 8060
+
+# Run the application
 CMD ["java", "-jar", "app.jar"]
